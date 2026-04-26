@@ -49,6 +49,10 @@ function deleteEntry(id) {
   return tx('readwrite', s => s.delete(id));
 }
 
+function updateEntry(entry) {
+  return tx('readwrite', s => s.put(entry));
+}
+
 function clearAllEntries() {
   return tx('readwrite', s => s.clear());
 }

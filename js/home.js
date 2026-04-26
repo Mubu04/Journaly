@@ -1,6 +1,7 @@
 'use strict';
 
 let selectedEmotions = [];
+let selectedPhoto    = null;
 
 function renderHome() {
   const screen  = document.getElementById('screen-home');
@@ -60,20 +61,44 @@ function renderHome() {
           />
         </div>
 
+        <div>
+          <p class="section-label">Location <span style="font-weight:400;text-transform:none;font-size:11px">(optional)</span></p>
+          <div class="location-row">
+            <input
+              type="text"
+              id="location-input"
+              placeholder="Where are you?"
+              maxlength="100"
+            />
+            <button class="location-detect-btn" id="location-detect-btn" type="button" title="Detect my location">📍</button>
+          </div>
+        </div>
+
+        <div>
+          <p class="section-label">Photo <span style="font-weight:400;text-transform:none;font-size:11px">(optional)</span></p>
+          <div id="photo-area">
+            <input type="file" id="photo-input" accept="image/*" hidden />
+            <button class="photo-attach-btn" id="photo-btn" type="button">📷 Attach Photo</button>
+          </div>
+        </div>
+
         <button id="save-btn" class="btn-primary" type="button">Save Entry</button>
       </div>
     </div>
   `;
 
   selectedEmotions = [];
+  selectedPhoto    = null;
   setupHomeListeners();
 }
 
 function setupHomeListeners() {
-  const textarea  = document.getElementById('entry-text');
-  const charNum   = document.getElementById('char-num');
-  const saveBtn   = document.getElementById('save-btn');
+  const textarea    = document.getElementById('entry-text');
+  const charNum     = document.getElementById('char-num');
+  const saveBtn     = document.getElementById('save-btn');
   const emotionGrid = document.getElementById('emotion-grid');
+  const photoBtn    = document.getElementById('photo-btn');
+  const photoInput  = document.getElementById('photo-input');
 
   /* Auto-resize textarea */
   textarea.addEventListener('input', () => {
@@ -96,8 +121,58 @@ function setupHomeListeners() {
     }
   });
 
+  /* Location detect */
+  document.getElementById('location-detect-btn').addEventListener('click', detectLocation);
+
+  /* Photo attach */
+  photoBtn.addEventListener('click', () => photoInput.click());
+
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      selectedPhoto = e.target.result;
+      renderPhotoPreview(selectedPhoto);
+    };
+    reader.readAsDataURL(file);
+  });
+
   /* Save */
   saveBtn.addEventListener('click', saveEntry);
+}
+
+function renderPhotoPreview(dataUrl) {
+  const area = document.getElementById('photo-area');
+  area.innerHTML = `
+    <div class="photo-preview">
+      <img src="${dataUrl}" alt="Entry photo" class="photo-thumb" />
+      <button class="photo-remove-btn" id="photo-remove" type="button">✕ Remove</button>
+    </div>
+  `;
+  area.querySelector('#photo-remove').addEventListener('click', () => {
+    selectedPhoto = null;
+    area.innerHTML = `
+      <input type="file" id="photo-input" accept="image/*" hidden />
+      <button class="photo-attach-btn" id="photo-btn" type="button">📷 Attach Photo</button>
+    `;
+    area.querySelector('#photo-btn').addEventListener('click', () => area.querySelector('#photo-input').click());
+    area.querySelector('#photo-input').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => { selectedPhoto = ev.target.result; renderPhotoPreview(selectedPhoto); };
+      reader.readAsDataURL(file);
+    });
+  });
+}
+
+function detectLocation() {
+  detectLocationInto(
+    document.getElementById('location-detect-btn'),
+    document.getElementById('location-input')
+  );
 }
 
 function saveEntry() {
@@ -109,11 +184,14 @@ function saveEntry() {
     return;
   }
 
-  const now   = new Date();
-  const entry = {
+  const location = document.getElementById('location-input').value.trim();
+  const now      = new Date();
+  const entry    = {
     text,
     emotions:  [...selectedEmotions],
-    goal:      goal || null,
+    goal:      goal     || null,
+    location:  location || null,
+    photo:     selectedPhoto || null,
     date:      toISODate(now),
     createdAt: now.toISOString(),
   };

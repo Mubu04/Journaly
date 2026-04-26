@@ -2,16 +2,16 @@
 
 /* ── Emotion definitions ── */
 const EMOTIONS = [
-  { id: 'happy',       label: 'Happy',       emoji: '😊', color: '#FFD60A', bg: '#FFFBEA' },
-  { id: 'excited',     label: 'Excited',     emoji: '🤩', color: '#FF6B35', bg: '#FFF0EA' },
-  { id: 'calm',        label: 'Calm',        emoji: '😌', color: '#5AC8FA', bg: '#EAF8FF' },
-  { id: 'grateful',    label: 'Grateful',    emoji: '🙏', color: '#34C759', bg: '#EAFBEE' },
-  { id: 'motivated',   label: 'Motivated',   emoji: '💪', color: '#AF52DE', bg: '#F7EEFF' },
-  { id: 'anxious',     label: 'Anxious',     emoji: '😰', color: '#FF9F0A', bg: '#FFF6EA' },
-  { id: 'sad',         label: 'Sad',         emoji: '😢', color: '#5E5CE6', bg: '#EEEEFF' },
-  { id: 'angry',       label: 'Angry',       emoji: '😤', color: '#FF453A', bg: '#FFF0EF' },
-  { id: 'overwhelmed', label: 'Overwhelmed', emoji: '😵', color: '#FF6B9D', bg: '#FFF0F5' },
-  { id: 'confused',    label: 'Confused',    emoji: '😕', color: '#8E8E9E', bg: '#F2F2F5' },
+  { id: 'happy',       label: 'Happy',       emoji: '😊', color: '#FFD60A', bg: '#FFFBEA', score:  2.0 },
+  { id: 'excited',     label: 'Excited',     emoji: '🤩', color: '#FF6B35', bg: '#FFF0EA', score:  2.0 },
+  { id: 'grateful',    label: 'Grateful',    emoji: '🙏', color: '#34C759', bg: '#EAFBEE', score:  1.5 },
+  { id: 'motivated',   label: 'Motivated',   emoji: '💪', color: '#AF52DE', bg: '#F7EEFF', score:  1.5 },
+  { id: 'calm',        label: 'Calm',        emoji: '😌', color: '#5AC8FA', bg: '#EAF8FF', score:  0.0 },
+  { id: 'confused',    label: 'Confused',    emoji: '😕', color: '#8E8E9E', bg: '#F2F2F5', score: -0.5 },
+  { id: 'anxious',     label: 'Anxious',     emoji: '😰', color: '#FF9F0A', bg: '#FFF6EA', score: -1.5 },
+  { id: 'overwhelmed', label: 'Overwhelmed', emoji: '😵', color: '#FF6B9D', bg: '#FFF0F5', score: -1.5 },
+  { id: 'sad',         label: 'Sad',         emoji: '😢', color: '#5E5CE6', bg: '#EEEEFF', score: -2.0 },
+  { id: 'angry',       label: 'Angry',       emoji: '😤', color: '#FF453A', bg: '#FFF0EF', score: -2.0 },
 ];
 
 /* ── Navigation ── */
@@ -93,6 +93,53 @@ function calcStreak(entries) {
   return streak;
 }
 
+/* ── Daily reminder ── */
+function checkReminder() {
+  if (localStorage.getItem('journaly-reminder-enabled') !== 'true') return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const time              = localStorage.getItem('journaly-reminder-time') || '20:00';
+  const [rHour, rMin]     = time.split(':').map(Number);
+  const now               = new Date();
+  const nowMins           = now.getHours() * 60 + now.getMinutes();
+  const remMins           = rHour * 60 + rMin;
+
+  /* Only fire at or after the reminder time */
+  if (nowMins < remMins) return;
+
+  /* Only fire once per day */
+  const today = toISODate(now);
+  if (localStorage.getItem('journaly-last-notified') === today) return;
+
+  getAllEntries().then(entries => {
+    /* Don't nag if they've already journaled today */
+    if (entries.some(e => e.date === today)) {
+      localStorage.setItem('journaly-last-notified', today);
+      return;
+    }
+
+    localStorage.setItem('journaly-last-notified', today);
+
+    const name = localStorage.getItem('journaly-name') || '';
+    const body = name
+      ? `Hey ${name}, take a moment to reflect on your day.`
+      : 'Take a moment to reflect on your day.';
+
+    navigator.serviceWorker.ready
+      .then(reg => reg.showNotification('Time to journal 📝', {
+        body,
+        icon:      './assets/icons/icon.svg',
+        badge:     './assets/icons/icon.svg',
+        tag:       'daily-reminder',
+        renotify:  false,
+      }))
+      .catch(() => {
+        /* Fallback if SW isn't ready */
+        new Notification('Time to journal 📝', { body, icon: './assets/icons/icon.svg' });
+      });
+  });
+}
+
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -104,4 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+
+  /* Check reminder on load, then every 60 seconds */
+  setTimeout(checkReminder, 5000);
+  setInterval(checkReminder, 60 * 1000);
 });

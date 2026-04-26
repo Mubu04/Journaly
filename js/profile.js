@@ -35,6 +35,8 @@ function renderProfile() {
         </div>
       </div>
 
+      ${buildReminderSection()}
+
       <div class="settings-group">
         <p class="settings-group-title">Data</p>
         <div class="settings-item clickable" id="export-btn">
@@ -63,6 +65,117 @@ function renderProfile() {
   document.getElementById('edit-name-btn').addEventListener('click', openNameModal);
   document.getElementById('export-btn').addEventListener('click', exportData);
   document.getElementById('clear-btn').addEventListener('click', confirmClearData);
+  setupReminderListeners();
+}
+
+/* ── Reminder section builder ── */
+function buildReminderSection() {
+  if (!('Notification' in window)) return ''; /* Browser doesn't support notifications */
+
+  const enabled = localStorage.getItem('journaly-reminder-enabled') === 'true';
+  const time    = localStorage.getItem('journaly-reminder-time') || '20:00';
+  const denied  = Notification.permission === 'denied';
+
+  return `
+    <div class="settings-group">
+      <p class="settings-group-title">Reminders</p>
+
+      <div class="settings-item">
+        <div class="settings-item-text">
+          <span>Daily Reminder</span>
+          <p class="settings-sub">${denied
+            ? '⚠️ Notifications blocked — enable in browser settings'
+            : "Get notified if you haven't journaled by your set time"
+          }</p>
+        </div>
+        <label class="toggle-switch">
+          <input
+            type="checkbox"
+            id="reminder-toggle"
+            ${enabled && !denied ? 'checked' : ''}
+            ${denied ? 'disabled' : ''}
+          />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="settings-item ${!enabled || denied ? 'settings-item--muted' : ''}" id="reminder-time-row">
+        <span>Reminder Time</span>
+        <input
+          type="time"
+          id="reminder-time"
+          value="${time}"
+          class="time-input"
+          ${!enabled || denied ? 'disabled' : ''}
+        />
+      </div>
+    </div>
+  `;
+}
+
+function setupReminderListeners() {
+  const toggle  = document.getElementById('reminder-toggle');
+  const timeRow = document.getElementById('reminder-time-row');
+  const timeInput = document.getElementById('reminder-time');
+
+  if (!toggle) return;
+
+  toggle.addEventListener('change', () => {
+    if (toggle.checked) {
+      enableReminder();
+    } else {
+      localStorage.setItem('journaly-reminder-enabled', 'false');
+      timeRow.classList.add('settings-item--muted');
+      timeInput.disabled = true;
+      showToast('Reminder turned off', '');
+    }
+  });
+
+  timeInput.addEventListener('change', () => {
+    localStorage.setItem('journaly-reminder-time', timeInput.value);
+    /* Reset last-notified so the new time is respected today */
+    localStorage.removeItem('journaly-last-notified');
+    showToast('Reminder time updated ✓', 'success');
+  });
+}
+
+function enableReminder() {
+  const toggle    = document.getElementById('reminder-toggle');
+  const timeRow   = document.getElementById('reminder-time-row');
+  const timeInput = document.getElementById('reminder-time');
+
+  if (!('Notification' in window)) {
+    showToast('Notifications not supported in this browser', 'error');
+    toggle.checked = false;
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    localStorage.setItem('journaly-reminder-enabled', 'true');
+    timeRow.classList.remove('settings-item--muted');
+    timeInput.disabled = false;
+    showToast('Reminder enabled ✓', 'success');
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    toggle.checked = false;
+    showToast('Notifications blocked — enable them in your browser settings', 'error');
+    return;
+  }
+
+  /* 'default' — ask for permission */
+  Notification.requestPermission().then(result => {
+    if (result === 'granted') {
+      localStorage.setItem('journaly-reminder-enabled', 'true');
+      showToast('Reminder enabled ✓', 'success');
+      renderProfile(); /* Re-render to reflect new state */
+    } else {
+      toggle.checked = false;
+      showToast('Permission denied — reminders won\'t work', 'error');
+      renderProfile();
+    }
+  });
 }
 
 function openNameModal() {

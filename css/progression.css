@@ -91,6 +91,55 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
+/* ── Mood trend canvas ── */
+.trend-container {
+  position: relative;
+}
+
+#mood-trend-chart {
+  width: 100%;
+  height: 200px;
+  display: block;
+  cursor: crosshair;
+}
+
+/* ── Tooltip ── */
+.trend-tooltip {
+  position: absolute;
+  background: var(--clr-text);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 100px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+
+.trend-tooltip[hidden] { display: none; }
+
+/* ── Scale legend below trend chart ── */
+.trend-scale-legend {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 2px 0;
+}
+
+.trend-scale-pos,
+.trend-scale-mid,
+.trend-scale-neg {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.trend-scale-pos { color: #34C759; }
+.trend-scale-mid { color: #6C63FF; }
+.trend-scale-neg { color: #FF453A; }
+
 /* ── Canvas chart ── */
 #emotion-chart {
   width: 100%;

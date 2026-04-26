@@ -1,4 +1,4 @@
-const CACHE = 'journaly-v1';
+const CACHE = 'journaly-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -31,6 +31,20 @@ self.addEventListener('activate', e => {
     )
   );
   self.clients.claim();
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      /* If the app is already open, just focus it */
+      for (const client of list) {
+        if ('focus' in client) return client.focus();
+      }
+      /* Otherwise open a new window */
+      return clients.openWindow('./');
+    })
+  );
 });
 
 self.addEventListener('fetch', e => {
