@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6C63FF" />
+  <meta name="description" content="Journaly – Journal your feelings, understand your emotions." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Journaly" />
+  <title>Journaly</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/icons/icon.svg" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/home.css" />
+  <link rel="stylesheet" href="css/history.css" />
+  <link rel="stylesheet" href="css/progression.css" />
+  <link rel="stylesheet" href="css/profile.css" />
+</head>
+<body>
+  <div id="app">
+    <main id="screen-home"      class="screen active"></main>
+    <main id="screen-history"   class="screen"></main>
+    <main id="screen-progression" class="screen"></main>
+    <main id="screen-profile"   class="screen"></main>
+
+    <nav id="bottom-nav">
+      <button class="nav-btn active" data-screen="home" aria-label="Home">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-btn" data-screen="history" aria-label="Journal History">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4zm0 16V14h12v6H6zm12-8h-5V4h5v8z"/>
+        </svg>
+        <span>Journal</span>
+      </button>
+      <button class="nav-btn" data-screen="progression" aria-label="Progress">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/>
+        </svg>
+        <span>Progress</span>
+      </button>
+      <button class="nav-btn" data-screen="profile" aria-label="Profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        </svg>
+        <span>Profile</span>
+      </button>
+    </nav>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/progression.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>
